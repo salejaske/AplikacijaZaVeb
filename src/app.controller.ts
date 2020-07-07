@@ -13,11 +13,6 @@ export class AppController {
   getHIndex(): string {
     return 'Home page!';
   }
-  
-  @Get('api/administrator')
-  getAllAdmins(): Promise<Administrator[]>{
-    return this.administratorService.getAll();
-  }
 
   
 }
