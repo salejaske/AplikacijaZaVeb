@@ -37,7 +37,7 @@ export class Article {
   })
   status: "dostupno" | "nije dostupno";
 
-  @Column({type:"varchar", name: "ingredients", length: 224, default: () => "'0'" })
+  @Column({type:"varchar", name: "ingredients", length: 224})
   ingredients: string;
 
   @Column({type:"date", name: "date_from" })
