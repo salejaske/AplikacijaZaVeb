@@ -9,6 +9,9 @@ import { diskStorage } from "multer";
 import { PhotoService } from "src/services/photo/photo.service";
 import { Photo } from "entities/photo.entity";
 import { ApiResponse } from "src/misc/api.response.class";
+import * as fileType from 'file-type';
+import * as fs from 'fs';
+import * as sharp from 'sharp';
 
 @Controller('api/article')
 @Crud({
@@ -86,7 +89,7 @@ export class ArticleController{
                     return
                 }
                 if(!(file.mimetype.includes('jpeg') || file.mimetype.includes('png'))){
-                    req.fileFilterError = 'Bad file content!';
+                    req.fileFilterError = 'Bad file content type!';
                     callback(null, false);
                     return
                 }
@@ -112,6 +115,20 @@ export class ArticleController{
             return new ApiResponse('error', -4002, 'File not uploaded!');
         }
 
+        const fileTypeResult =await fileType.fromFile(photo.path);
+        if(!fileTypeResult){
+            fs.unlinkSync(photo.path)
+            return new ApiResponse('error', -4002, 'Cannot detect file type!');
+        }
+        const realMimeType = fileTypeResult.mime;
+        if(!(realMimeType.includes('jpeg') || realMimeType.includes('png'))){
+            fs.unlinkSync(photo.path)
+            return new ApiResponse('error', -4002, 'Bad file content type!');
+        
+        }
+
+        await this.createThumb(photo);
+        await this.createSmallImage(photo);
 
         const newPhoto: Photo = new Photo();
         newPhoto.articleId = articleId;
@@ -126,4 +143,41 @@ export class ArticleController{
         return savedPhoto;
 
     }
+    async createThumb(photo) {
+        const originalFilePath = photo.path;
+        const fileName = photo.filename;
+
+        const destinationFilePath = StorageConfig.photoDestination + "thumb/" + fileName;
+
+        await sharp(originalFilePath)
+            .resize({
+                fit: 'cover',
+                width: StorageConfig.photoThumbSize.width,
+                height: StorageConfig.photoThumbSize.height,
+                background: {
+                    r: 255, g: 255, b: 255, alpha: 0.0 
+                }
+            })
+            .toFile(destinationFilePath);
+
+    }
+    async createSmallImage(photo) {
+        const originalFilePath = photo.path;
+        const fileName = photo.filename;
+
+        const destinationFilePath = StorageConfig.photoDestination + "small/" + fileName;
+
+        await sharp(originalFilePath)
+            .resize({
+                fit: 'cover',
+                width: StorageConfig.photoSmallSize.width,
+                height: StorageConfig.photoSmallSize.height,
+                background: {
+                    r: 255, g: 255, b: 255, alpha: 0.0 
+                }
+            })
+            .toFile(destinationFilePath);
+    
+
+    } 
 }
