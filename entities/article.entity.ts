@@ -15,45 +15,29 @@ import { CartArticle } from "./cart-article.entity";
 import { Photo } from "./photo.entity";
 
 @Index("fk_article_category_id", ["categoryId"], {})
-@Entity("article")
+@Entity("article", { schema: "app" })
 export class Article {
   @PrimaryGeneratedColumn({ type: "int", name: "article_id", unsigned: true })
   articleId: number;
 
-  @Column({ type: "varchar", length: 128 })
+  @Column("varchar", { name: "name", length: 128, default: () => "'0'" })
   name: string;
 
-  @Column({ type:"int", name: "category_id", unsigned: true })
+  @Column("int", { name: "category_id", unsigned: true, default: () => "'0'" })
   categoryId: number;
 
-  @Column({ type:"text"})
+  @Column("varchar", { name: "excerpt", length: 255, default: () => "'0'" })
+  excerpt: string;
+
+  @Column("text", { name: "description" })
   description: string;
 
-  @Column({
-    type: "enum",
+  @Column("enum", {
     name: "status",
     enum: ["dostupno", "nije dostupno"],
     default: () => "'dostupno'",
   })
   status: "dostupno" | "nije dostupno";
-
-  @Column({type:"varchar", name: "ingredients", length: 224})
-  ingredients: string;
-
-  @Column({type:"date", name: "date_from" })
-  dateFrom: string;
-
-  @Column({type:"date", name: "date_to" })
-  dateTo: string;
-
-  @OneToOne(() => ArticleFeature, (articleFeature) => articleFeature.article, {
-    onDelete: "NO ACTION",
-    onUpdate: "CASCADE",
-  })
-  @JoinColumn([
-    { name: "article_id", referencedColumnName: "articleFeatureId" },
-  ])
-  article: ArticleFeature;
 
   @ManyToOne(() => Category, (category) => category.articles, {
     onDelete: "NO ACTION",
@@ -62,7 +46,7 @@ export class Article {
   @JoinColumn([{ name: "category_id", referencedColumnName: "categoryId" }])
   category: Category;
 
-  @OneToMany(() => ArticleFeature, (articleFeature) => articleFeature.article2)
+  @OneToMany(() => ArticleFeature, (articleFeature) => articleFeature.article)
   articleFeatures: ArticleFeature[];
 
   @OneToMany(() => ArticlePrice, (articlePrice) => articlePrice.article)

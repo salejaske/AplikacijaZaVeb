@@ -33,7 +33,7 @@ export class ArticleFeature {
   @Column("varchar", { length: 255})
   value: string;
 
-  @OneToOne(() => Article, (article) => article.article)
+  @OneToOne(() => Article, (article) => article.articleId)
   article: Article;
 
   @ManyToOne(() => Article, (article) => article.articleFeatures, {
