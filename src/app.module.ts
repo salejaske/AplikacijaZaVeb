@@ -15,6 +15,10 @@ import { ArticleFeature } from 'entities/article-Feature.entity';
 import { Category } from 'entities/category.entity';
 import { Photo } from 'entities/photo.entity';
 import { AdministratorController } from './controllers/api/administrator.controller';
+import { CategoryController } from './controllers/api/category.controller';
+import { CategoryService } from './services/category/category.service';
+import { ArticleService } from './services/artricle/article.service';
+import { ArticleController } from './controllers/api/article.controller';
 
 
 
@@ -41,12 +45,22 @@ import { AdministratorController } from './controllers/api/administrator.control
         User, 
       ]
     }),
-    TypeOrmModule.forFeature([ Administrator ])
+    TypeOrmModule.forFeature([ 
+      Administrator,
+      Category,
+      Article,
+    ])
   ],
   controllers: [
     AppController,
     AdministratorController,
+    CategoryController,
+    ArticleController,
   ],
-  providers: [AdministratorService],
+  providers: [
+    AdministratorService,
+    CategoryService,
+    ArticleService,
+  ],
 })
 export class AppModule {}
