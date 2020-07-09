@@ -17,11 +17,7 @@ export class CartService {
         @InjectRepository(CartArticle) 
         private readonly cartArticle: Repository<CartArticle>,
 
-        @InjectRepository(Article) 
-        private readonly article: Repository<Article>,
-
-        @InjectRepository(Order) 
-        private readonly order: Repository<Order>,
+       
 
     ){ }
 
@@ -78,6 +74,7 @@ export class CartService {
                 "cartArticles",
                 "cartArticles.article",
                 "cartArticles.article.category",
+                "cartArticles.article.articlePrices",
                 
             ],
         });
