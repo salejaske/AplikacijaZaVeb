@@ -69,8 +69,8 @@ export class ArticleController{
         public photoService: PhotoService,
         ){ }
 
-    
-    @Post('createFull')
+    // POST http://localhost:3000/api/article/
+    @Post()
     @UseGuards(RoleCheckedGuard)
     @AllowToRoles('administrator')
     createFullArticle(@Body() data: AddArticleDto){
