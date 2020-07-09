@@ -7,29 +7,33 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  ManyToMany,
+  JoinTable,
 } from "typeorm";
 import { ArticleFeature } from "./article-Feature.entity";
 import { Category } from "./category.entity";
 import { ArticlePrice } from "./article-price.entity";
 import { CartArticle } from "./cart-article.entity";
 import { Photo } from "./photo.entity";
+import { Feature } from "./feature.entity";
 
-@Index("fk_article_category_id", ["categoryId"], {})
+
+
 @Entity("article", { schema: "app" })
 export class Article {
   @PrimaryGeneratedColumn({ type: "int", name: "article_id", unsigned: true })
   articleId: number;
 
-  @Column("varchar", { name: "name", length: 128, default: () => "'0'" })
+  @Column({ type: "varchar", length: 128 })
   name: string;
 
-  @Column("int", { name: "category_id", unsigned: true, default: () => "'0'" })
+  @Column({ type: "int", name: "category_id", unsigned: true })
   categoryId: number;
 
-  @Column("varchar", { name: "excerpt", length: 255, default: () => "'0'" })
+  @Column({ type: "varchar", length: 255 })
   excerpt: string;
 
-  @Column("text", { name: "description" })
+  @Column({ type: "text" })
   description: string;
 
   @Column("enum", {
@@ -40,7 +44,7 @@ export class Article {
   status: "dostupno" | "nije dostupno";
 
   @ManyToOne(() => Category, (category) => category.articles, {
-    onDelete: "NO ACTION",
+    onDelete: "RESTRICT",
     onUpdate: "CASCADE",
   })
   @JoinColumn([{ name: "category_id", referencedColumnName: "categoryId" }])
@@ -48,6 +52,14 @@ export class Article {
 
   @OneToMany(() => ArticleFeature, (articleFeature) => articleFeature.article)
   articleFeatures: ArticleFeature[];
+
+  @ManyToMany(type => Feature)
+  @JoinTable({
+    name: 'article_feature',
+    joinColumn: { name: 'article_id', referencedColumnName: 'articleId' },
+    inverseJoinColumn: { name: 'feature_id', referencedColumnName: 'featureId' },
+  })
+  features: Feature[];
 
   @OneToMany(() => ArticlePrice, (articlePrice) => articlePrice.article)
   articlePrices: ArticlePrice[];
