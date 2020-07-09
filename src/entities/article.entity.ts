@@ -16,6 +16,9 @@ import { ArticlePrice } from "./article-price.entity";
 import { CartArticle } from "./cart-article.entity";
 import { Photo } from "./photo.entity";
 import { Feature } from "./feature.entity";
+import * as Validator from 'class-validator';
+import { ArticleService } from "src/services/artricle/article.service";
+
 
 
 
@@ -25,15 +28,24 @@ export class Article {
   articleId: number;
 
   @Column({ type: "varchar", length: 128 })
+  @Validator.IsNotEmpty()
+  @Validator.IsString()
+  @Validator.Length(5, 128)
   name: string;
 
   @Column({ type: "int", name: "category_id", unsigned: true })
   categoryId: number;
 
   @Column({ type: "varchar", length: 255 })
+  @Validator.IsNotEmpty()
+  @Validator.IsString()
+  @Validator.Length(10, 255)
   excerpt: string;
 
   @Column({ type: "text" })
+  @Validator.IsNotEmpty()
+  @Validator.IsString()
+  @Validator.Length(64, 10000)
   description: string;
 
   @Column("enum", {
@@ -41,6 +53,10 @@ export class Article {
     enum: ["dostupno", "nije dostupno"],
     default: () => "'dostupno'",
   })
+  @Validator.IsNotEmpty()
+  @Validator.IsString()
+  @Validator.IsIn(["dostupno", "nije dostupno"])
+
   status: "dostupno" | "nije dostupno";
 
   @ManyToOne(() => Category, (category) => category.articles, {
