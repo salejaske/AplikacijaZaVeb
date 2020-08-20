@@ -17,7 +17,6 @@ import { CartArticle } from "./cart-article.entity";
 import { Photo } from "./photo.entity";
 import { Feature } from "./feature.entity";
 import * as Validator from 'class-validator';
-import { ArticleService } from "src/services/artricle/article.service";
 
 
 

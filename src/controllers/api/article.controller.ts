@@ -15,6 +15,7 @@ import * as sharp from 'sharp';
 import { EditArticleDto } from "src/dtos/article/edit.article.dto";
 import { RoleCheckedGuard } from "src/misc/role.checker.guard";
 import { AllowToRoles } from "src/misc/allow.to.roles.descriptor";
+import { ArticleSearchDto } from "src/dtos/article/article.search.dto";
 
 @Controller('api/article')
 @Crud({
@@ -22,69 +23,71 @@ import { AllowToRoles } from "src/misc/allow.to.roles.descriptor";
         type: Article
     },
     params: {
-        id:{
+        id: {
             field: 'articleId',
             type: 'number',
             primary: true
         }
     },
-    query:{
+    query: {
         join: {
-            categories: {   
+            category: {
                 eager: true
             },
             photos: {
-                 eager: true   
+                eager: true
+            },
+            articlePrices: {
+                eager: true
             },
             articleFeatures: {
                 eager: true
             },
-            articlePrices: {
+            features: {
                 eager: true
             }
         }
     },
     routes: {
         only: [
-            'getOneBase', 
+            'getOneBase',
             'getManyBase',
         ],
         getOneBase: {
-            decorators:[
+            decorators: [
                 UseGuards(RoleCheckedGuard),
                 AllowToRoles('administrator', 'user')
             ],
         },
         getManyBase: {
-            decorators:[
+            decorators: [
                 UseGuards(RoleCheckedGuard),
                 AllowToRoles('administrator', 'user')
             ],
         },
     },
-}) 
-export class ArticleController{
+})
+export class ArticleController {
     constructor(
         public service: ArticleService,
         public photoService: PhotoService,
-        ){ }
+    ) { }
 
-    // POST http://localhost:3000/api/article/
-    @Post()
+    @Post() // POST http://localhost:3000/api/article/
     @UseGuards(RoleCheckedGuard)
     @AllowToRoles('administrator')
-    createFullArticle(@Body() data: AddArticleDto){
+    createFullArticle(@Body() data: AddArticleDto) {
         return this.service.createFullArticle(data);
     }
-    // PATCH http://localhost:3000/api/article/1/
-    @Patch(':id')
+
+    @Patch(':id') // PATCH http://localhost:3000/api/article/2/
     @UseGuards(RoleCheckedGuard)
     @AllowToRoles('administrator')
-    editFullArticle(@Param('id') id: number, @Body() data: EditArticleDto){
-        return this.service.editfullArticle(id, data);
+    editFullArticle(@Param('id') id: number, @Body() data: EditArticleDto) {
+        return this.service.editFullArticle(id, data);
     }
 
-    @Post(':id/uploadPhoto/')
+    @Post(':id/uploadPhoto/') // POST http://localhost:3000/api/article/:id/uploadPhoto/
     @UseGuards(RoleCheckedGuard)
     @AllowToRoles('administrator')
     @UseInterceptors(
@@ -92,39 +95,41 @@ export class ArticleController{
             storage: diskStorage({
                 destination: StorageConfig.photo.destination,
                 filename: (req, file, callback) => {
-                    let original = file.originalname;
+                    let original: string = file.originalname;
+
                     let normalized = original.replace(/\s+/g, '-');
-                    normalized = normalized.replace(/[^A-z0-9\.\-]/g,'');
+                    normalized = normalized.replace(/[^A-z0-9\.\-]/g, '');
                     let sada = new Date();
                     let datePart = '';
                     datePart += sada.getFullYear().toString();
                     datePart += (sada.getMonth() + 1).toString();
                     datePart += sada.getDate().toString();
 
-                    
-                    let randomPart: string;
+                    let randomPart: string =
                         new Array(10)
                             .fill(0)
                             .map(e => (Math.random() * 9).toFixed(0).toString())
                             .join('');
-                    
+
                     let fileName = datePart + '-' + randomPart + '-' + normalized;
                     fileName = fileName.toLocaleLowerCase();
 
                     callback(null, fileName);
-
                 }
             }),
             fileFilter: (req, file, callback) => {
-                if(!file.originalname.match(/\.(jpg|png)$/)){
+                // 1. Check ekstenzije: JPG, PNG
+                if (!file.originalname.toLowerCase().match(/\.(jpg|png)$/)) {
                     req.fileFilterError = 'Bad file extension!';
                     callback(null, false);
-                    return
+                    return;
                 }
-                if(!(file.mimetype.includes('jpeg') || file.mimetype.includes('png'))){
+
+                // 2. Check tipa sadrzaja: image/jpeg, image/png (mimetype)
+                if (!(file.mimetype.includes('jpeg') || file.mimetype.includes('png'))) {
                     req.fileFilterError = 'Bad file content type!';
                     callback(null, false);
-                    return
+                    return;
                 }
 
                 callback(null, true);
@@ -136,57 +141,53 @@ export class ArticleController{
         })
     )
     async uploadPhoto(
-        @Param('id') articleId: number, 
-        @UploadedFile() photo, 
+        @Param('id') articleId: number,
+        @UploadedFile() photo,
         @Req() req
-        ): Promise <ApiResponse | Photo> {
-
-        if(req.fileFilterError) {
+    ): Promise<ApiResponse | Photo> {
+        if (req.fileFilterError) {
             return new ApiResponse('error', -4002, req.fileFilterError);
         }
-        if(!photo) {
+
+        if (!photo) {
             return new ApiResponse('error', -4002, 'File not uploaded!');
         }
 
-        const fileTypeResult =await fileType.fromFile(photo.path);
-        if(!fileTypeResult){
-            fs.unlinkSync(photo.path)
+        const fileTypeResult = await fileType.fromFile(photo.path);
+        if (!fileTypeResult) {
+            fs.unlinkSync(photo.path);
             return new ApiResponse('error', -4002, 'Cannot detect file type!');
         }
+
         const realMimeType = fileTypeResult.mime;
-        if(!(realMimeType.includes('jpeg') || realMimeType.includes('png'))){
-            fs.unlinkSync(photo.path)
+        if (!(realMimeType.includes('jpeg') || realMimeType.includes('png'))) {
+            fs.unlinkSync(photo.path);
             return new ApiResponse('error', -4002, 'Bad file content type!');
-        
         }
 
         await this.createResizedImage(photo, StorageConfig.photo.resize.thumb);
         await this.createResizedImage(photo, StorageConfig.photo.resize.small);
-        
 
         const newPhoto: Photo = new Photo();
         newPhoto.articleId = articleId;
         newPhoto.imagePath = photo.filename;
-        
-        
+
         const savedPhoto = await this.photoService.add(newPhoto);
-        if(!savedPhoto){
+        if (!savedPhoto) {
             return new ApiResponse('error', -4001);
         }
 
         return savedPhoto;
-
     }
-    
-    async createResizedImage(photo, resizeSettings){
+
+    async createResizedImage(photo, resizeSettings) {
         const originalFilePath = photo.path;
         const fileName = photo.filename;
 
-        const destinationFilePath = 
-            StorageConfig.photo.destination + 
-            resizeSettings.directory + 
+        const destinationFilePath =
+            StorageConfig.photo.destination +
+            resizeSettings.directory +
             fileName;
-
 
         await sharp(originalFilePath)
             .resize({
@@ -195,37 +196,48 @@ export class ArticleController{
                 height: resizeSettings.height,
             })
             .toFile(destinationFilePath);
-
     }
 
+    // http://localhost:3000/api/article/1/deletePhoto/45/
     @Delete(':articleId/deletePhoto/:photoId')
     @UseGuards(RoleCheckedGuard)
     @AllowToRoles('administrator')
     public async deletePhoto(
         @Param('articleId') articleId: number,
-        @Param('photoId') photoId: number,){
-            const photo = await this.photoService.findOne({
-                articleId: articleId,
-                photoId: photoId
-            });
+        @Param('photoId') photoId: number,
+    ) {
+        const photo = await this.photoService.findOne({
+            articleId: articleId,
+            photoId: photoId
+        });
 
-            if (!photo) {
-            return new ApiResponse("error", -4004, 'Photo not found.');
-            }
-            try{
+        if (!photo) {
+            return new ApiResponse('error', -4004, 'Photo not found!');
+        }
+
+        try {
             fs.unlinkSync(StorageConfig.photo.destination + photo.imagePath);
             fs.unlinkSync(StorageConfig.photo.destination +
-                          StorageConfig.photo.resize.thumb.directory +
-                          photo.imagePath);
+                        StorageConfig.photo.resize.thumb.directory +
+                        photo.imagePath);
             fs.unlinkSync(StorageConfig.photo.destination +
-                          StorageConfig.photo.resize.small.directory +
-                          photo.imagePath);
-            }catch (e) {  }
+                        StorageConfig.photo.resize.small.directory +
+                        photo.imagePath);
+        } catch (e) { }
 
-            const deleteResult = await this.photoService.deleteById(photoId);  
-            if (deleteResult.affected === 0) {
-                return new ApiResponse("error", -4004, 'Photo not found.');
-            }         
-            return new ApiResponse("ok", 0, 'One photo has been deleted.');    
+        const deleteResult = await this.photoService.deleteById(photoId);
+
+        if (deleteResult.affected === 0) {
+            return new ApiResponse('error', -4004, 'Photo not found!');
         }
+
+        return new ApiResponse('ok', 0, 'One photo deleted!');
+    }
+
+    @Post('search')
+    @UseGuards(RoleCheckedGuard)
+    @AllowToRoles('administrator', 'user')
+    async search(@Body() data: ArticleSearchDto): Promise<Article[] | ApiResponse> {
+        return await this.service.search(data);
+    }
 }

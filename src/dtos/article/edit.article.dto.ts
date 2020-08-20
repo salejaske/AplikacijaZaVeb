@@ -20,13 +20,24 @@ export class EditArticleDto {
     @Validator.Length(64, 10000)
     description: string;
     
-    
+    @Validator.IsNotEmpty()
+    @Validator.IsPositive()
+    @Validator.IsNumber({
+        allowInfinity: false,
+        allowNaN: false,
+        maxDecimalPlaces: 2,
+    })
+    price: number;
     
     @Validator.IsNotEmpty()
     @Validator.IsString()
     @Validator.IsIn(["dostupno", "nije dostupno"])    
     status: 'dostupno'|'nije dostupno';
-    price: number;
+
+    @Validator.IsNotEmpty()
+    @Validator.IsIn([0, 1])
+    isPromoted: 0 | 1;
+
 
     @Validator.IsOptional()
     @Validator.IsArray()

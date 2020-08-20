@@ -61,4 +61,12 @@ export class UserCartController{
         const cart = await this.getActiveCartForUserId(req.token.id); 
         return await this.orderService.add(cart.cartId)
     }
+
+    // POST  http://localhost:3000/api/user/cart/orders/
+    @Get('orders')
+    @UseGuards(RoleCheckedGuard)
+    @AllowToRoles('user')
+    async getOrders( @Req() req: Request):Promise<Order[]>{
+        return await this.orderService.getAllByUserId(req.token.id);
+    }
 }

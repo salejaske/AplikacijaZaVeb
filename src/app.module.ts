@@ -1,5 +1,5 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { AppController } from './app.controller';
+import { AppController } from './controllers/app.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseConfiguration } from 'config/database.configuration';
 import { Administrator } from 'src/entities/administrator.entity';
@@ -28,6 +28,8 @@ import { UserService } from './services/user/user.service';
 import { CartService } from './services/cart/cart.service';
 import { UserCartController } from './controllers/api/user.cart.controller';
 import { OrderService } from './services/order/order.service';
+import { AdministratorToken } from './entities/administrator-token.entity';
+import { UserToken } from './entities/user-token.entity';
 
 
 
@@ -52,6 +54,8 @@ import { OrderService } from './services/order/order.service';
         Order,
         Photo,
         User, 
+        UserToken,
+        AdministratorToken,
       ]
     }),
     TypeOrmModule.forFeature([ 
@@ -66,6 +70,8 @@ import { OrderService } from './services/order/order.service';
         Order,
         Photo,
         User, 
+        UserToken,
+        AdministratorToken,
     ])
   ],
   controllers: [
