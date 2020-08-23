@@ -16,7 +16,7 @@ export class Order {
 
   @Column("int", { name: "cart_id", unsigned: true})
   cartId: number;
- 
+
   @Column("enum", {
     name: "status",
     enum: ["prihvacena", "odbijena", "na cekanju"],
